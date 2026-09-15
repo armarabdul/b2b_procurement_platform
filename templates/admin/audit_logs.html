@@ -1,0 +1,55 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}System Audit & Compliance Log{% endblock %}
+{% block breadcrumbs %}Admin &rsaquo; Audit Trail{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Platform Activity Audit Log</h2>
+            <p class="text-xs text-slate-500">Immutable transaction log of user events, bids, awards, and payments</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">Timestamp (GST)</th>
+                        <th class="py-3 px-4">User</th>
+                        <th class="py-3 px-4">Action Code</th>
+                        <th class="py-3 px-4">Reference</th>
+                        <th class="py-3 px-4">Description</th>
+                        <th class="py-3 px-4">IP Address</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for log in logs %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                            {{ log.timestamp|date:"Y-m-d H:i:s" }}
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="font-bold text-slate-900">{{ log.user.get_full_name|default:log.user.username|default:"System" }}</span>
+                            <span class="text-slate-400 block text-[10px]">{{ log.user.email }}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-[11px] text-slate-700">{{ log.object_repr|default:"--" }}</td>
+                        <td class="py-3 px-4 text-slate-800 max-w-md leading-relaxed">{{ log.description }}</td>
+                        <td class="py-3 px-4 font-mono text-[10px] text-slate-400">{{ log.ip_address|default:"127.0.0.1" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="p-8 text-center text-slate-400 text-xs">No audit logs recorded yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

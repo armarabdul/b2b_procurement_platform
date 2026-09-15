@@ -1,0 +1,174 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}{{ rfq.rfq_number }} - Requirement Details{% endblock %}
+{% block breadcrumbs %}Procurement &rsaquo; <a href="{% url 'customer_portal:rfq_list' %}" class="hover:underline">RFQs</a> &rsaquo; {{ rfq.rfq_number }}{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+
+    <!-- HEADER SUMMARY CARD -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="font-mono text-sm font-black text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-100">{{ rfq.rfq_number }}</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider badge-status-{{ rfq.status }}">
+                        {{ rfq.get_status_display }}
+                    </span>
+                    <span class="text-xs text-slate-500 font-medium">{{ rfq.category.name }}</span>
+                </div>
+                <h1 class="text-2xl font-heading font-extrabold text-slate-900">{{ rfq.title }}</h1>
+                <p class="text-xs text-slate-500 mt-1">Created on {{ rfq.created_at|date:"M d, Y" }} by {{ rfq.customer.company_name }}</p>
+            </div>
+
+            <div class="flex items-center space-x-3 shrink-0">
+                {% if rfq.status == 'DRAFT' %}
+                    <a href="{% url 'customer_portal:rfq_publish' rfq.id %}" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition">
+                        <i data-lucide="send" class="w-4 h-4 mr-1.5"></i>
+                        Publish RFQ Now
+                    </a>
+                {% elif rfq.status == 'AWARDED' and rfq.award %}
+                    <a href="{% url 'customer_portal:po_detail' rfq.award.awarded_quotation.purchase_order.id %}" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition">
+                        <i data-lucide="file-check" class="w-4 h-4 mr-1.5"></i>
+                        View Official Purchase Order &rarr;
+                    </a>
+                {% elif quotations.count > 0 %}
+                    <a href="{% url 'customer_portal:quotation_comparison' rfq.id %}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5">
+                        <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i>
+                        Open Quotation Comparison ({{ quotations.count }})
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- COMMERCIAL & LOGISTICS METADATA -->
+        <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs">
+            <div>
+                <span class="block text-slate-400 font-semibold uppercase tracking-wider">Delivery Location</span>
+                <span class="font-medium text-slate-800 mt-1 block">{{ rfq.delivery_location }} ({{ rfq.get_emirate_display }})</span>
+            </div>
+            <div>
+                <span class="block text-slate-400 font-semibold uppercase tracking-wider">Target Delivery Date</span>
+                <span class="font-medium text-slate-800 mt-1 block">{{ rfq.delivery_deadline|date:"M d, Y" }}</span>
+            </div>
+            <div>
+                <span class="block text-slate-400 font-semibold uppercase tracking-wider">Quotation Deadline</span>
+                <span class="font-medium text-slate-800 mt-1 block {% if rfq.is_expired %}text-red-600 font-bold{% endif %}">
+                    {{ rfq.submission_deadline|date:"M d, Y H:i" }}
+                    {% if rfq.is_expired %}(Expired){% endif %}
+                </span>
+            </div>
+            <div>
+                <span class="block text-slate-400 font-semibold uppercase tracking-wider">Preferred Terms</span>
+                <span class="font-medium text-slate-800 mt-1 block">{{ rfq.preferred_terms }}</span>
+            </div>
+        </div>
+
+        <div class="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed">
+            <strong class="font-semibold text-slate-900 block mb-1">Requirement Scope:</strong>
+            {{ rfq.description|linebreaksbr }}
+        </div>
+    </div>
+
+    <!-- LINE ITEMS TABLE -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h3 class="font-heading font-bold text-base text-slate-900">Required Products & Quantities</h3>
+                <p class="text-xs text-slate-500">Technical line items requested for quotation</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                {{ rfq.items.count }} Line Items
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">#</th>
+                        <th class="py-3 px-4">Item Name</th>
+                        <th class="py-3 px-4">Quantity</th>
+                        <th class="py-3 px-4">Technical Specifications</th>
+                        <th class="py-3 px-4">Preferred Brand</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for item in rfq.items.all %}
+                    <tr class="hover:bg-slate-50/60">
+                        <td class="py-3.5 px-4 text-slate-400">{{ forloop.counter }}</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-900">{{ item.item_name }}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="font-bold text-slate-800">{{ item.quantity|floatformat:0 }}</span> {{ item.unit }}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600 max-w-xs">{{ item.specifications|default:"Standard commercial grade" }}</td>
+                        <td class="py-3.5 px-4 text-slate-600">{{ item.preferred_brand|default:"Open to equivalents" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- QUOTATIONS SUBMITTED LIST -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h3 class="font-heading font-bold text-base text-slate-900">Received Supplier Quotations</h3>
+                <p class="text-xs text-slate-500">Bids submitted by approved UAE suppliers</p>
+            </div>
+            {% if quotations.count > 0 %}
+            <a href="{% url 'customer_portal:quotation_comparison' rfq.id %}" class="inline-flex items-center px-3.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold border border-emerald-200">
+                <i data-lucide="columns" class="w-3.5 h-3.5 mr-1.5"></i>
+                Side-by-Side Comparison
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="divide-y divide-slate-100">
+            {% for quote in quotations %}
+            <div class="p-5 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono text-xs font-bold text-indigo-600">{{ quote.quotation_number }}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider badge-status-{{ quote.status }}">
+                            {{ quote.get_status_display }}
+                        </span>
+                        {% if quote.evaluation and quote.evaluation.is_recommended %}
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500 text-white tracking-wider flex items-center">
+                            <i data-lucide="sparkles" class="w-3 h-3 mr-1"></i> Best Value
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm font-bold text-slate-900">{{ quote.supplier.company_name }}</p>
+                    <div class="flex flex-wrap items-center gap-x-4 text-xs text-slate-500">
+                        <span><i data-lucide="truck" class="w-3 h-3 inline mr-1 text-slate-400"></i>Delivery: {{ quote.delivery_days }} Days</span>
+                        <span><i data-lucide="credit-card" class="w-3 h-3 inline mr-1 text-slate-400"></i>Terms: {{ quote.payment_terms }}</span>
+                        <span><i data-lucide="star" class="w-3 h-3 inline mr-1 text-amber-500 fill-amber-400"></i>Rating: {{ quote.supplier.supplier_profile.supplier_rating }}/5.00</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Grand Total (Inc. 5% VAT)</span>
+                        <span class="text-base font-extrabold text-slate-900 font-mono">AED {{ quote.grand_total|floatformat:2 }}</span>
+                    </div>
+                    {% if rfq.status != 'AWARDED' %}
+                    <form method="POST" action="{% url 'customer_portal:award_quotation' quote.id %}" onsubmit="return confirm('Award RFQ to {{ quote.supplier.company_name }} for AED {{ quote.grand_total }}? This will issue the Purchase Order.')">
+                        {% csrf_token %}
+                        <button type="submit" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition">
+                            Award & PO
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center text-xs text-slate-400">
+                No quotations submitted yet. Registered suppliers will be notified to bid.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

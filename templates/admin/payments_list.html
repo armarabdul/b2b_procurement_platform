@@ -1,0 +1,55 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Payments & Escrow Transactions{% endblock %}
+{% block breadcrumbs %}Admin &rsaquo; Payment Ledger{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Commercial Settlement Ledger</h2>
+            <p class="text-xs text-slate-500">Track mock escrow deposits, advance payments, and installment milestones</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">PO Ref</th>
+                        <th class="py-3 px-4">Buyer Company</th>
+                        <th class="py-3 px-4">Supplier Vendor</th>
+                        <th class="py-3 px-4">Commercial Plan</th>
+                        <th class="py-3 px-4">Disbursed (AED)</th>
+                        <th class="py-3 px-4">Contract Total (AED)</th>
+                        <th class="py-3 px-4">Escrow Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for p in payments %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-4 font-mono font-bold text-indigo-600">{{ p.po.po_number }}</td>
+                        <td class="py-3.5 px-4 font-semibold text-slate-900">{{ p.po.customer.company_name }}</td>
+                        <td class="py-3.5 px-4 font-semibold text-slate-900">{{ p.po.supplier.company_name }}</td>
+                        <td class="py-3.5 px-4">{{ p.get_payment_plan_display }}</td>
+                        <td class="py-3.5 px-4 font-bold font-mono text-emerald-600">AED {{ p.amount_paid|floatformat:2 }}</td>
+                        <td class="py-3.5 px-4 font-bold font-mono text-slate-900">AED {{ p.total_amount|floatformat:2 }}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                                {% if p.status == 'PAID' %}bg-emerald-100 text-emerald-800
+                                {% elif p.status == 'PARTIALLY_PAID' %}bg-amber-100 text-amber-800
+                                {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                {{ p.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">No payment records logged yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

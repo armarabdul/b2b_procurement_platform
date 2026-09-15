@@ -1,0 +1,67 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}My Submitted Quotations{% endblock %}
+{% block breadcrumbs %}Vendor Portal &rsaquo; Quotations{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Commercial Quotations</h2>
+            <p class="text-xs text-slate-500">Track all bids submitted to corporate buyers</p>
+        </div>
+        <a href="{% url 'supplier_portal:rfq_discovery' %}" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition">
+            <i data-lucide="search" class="w-4 h-4 mr-1.5"></i>
+            Find RFQs to Bid
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100 overflow-hidden">
+        {% for quote in quotations %}
+        <div class="p-6 hover:bg-slate-50 transition flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="space-y-1">
+                <div class="flex items-center space-x-2">
+                    <span class="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{{ quote.quotation_number }}</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider badge-status-{{ quote.status }}">
+                        {{ quote.get_status_display }}
+                    </span>
+                    <span class="text-xs text-slate-400 font-medium">For: {{ quote.rfq.rfq_number }}</span>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">
+                    {{ quote.rfq.title }}
+                </h3>
+                <div class="flex flex-wrap items-center gap-x-5 text-xs text-slate-500">
+                    <span><i data-lucide="building" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Buyer: <strong class="text-slate-800">{{ quote.rfq.customer.company_name }}</strong></span>
+                    <span><i data-lucide="truck" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Delivery: {{ quote.delivery_days }} Days</span>
+                    <span><i data-lucide="credit-card" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Terms: {{ quote.payment_terms }}</span>
+                    <span><i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Submitted: {{ quote.created_at|date:"d M Y" }}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4 shrink-0">
+                <div class="text-right">
+                    <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Grand Total (Inc VAT)</span>
+                    <span class="text-base font-extrabold text-slate-900 font-mono">AED {{ quote.grand_total|floatformat:2 }}</span>
+                </div>
+
+                {% if quote.status == 'ACCEPTED' and quote.purchase_order %}
+                <a href="{% url 'supplier_portal:supplier_po_detail' quote.purchase_order.id %}" class="inline-flex items-center px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition">
+                    <i data-lucide="file-check" class="w-3.5 h-3.5 mr-1.5"></i>
+                    View Won PO &rarr;
+                </a>
+                {% elif quote.is_editable %}
+                <a href="{% url 'supplier_portal:submit_quotation' quote.rfq.id %}" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition">
+                    Edit Bid
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-12 text-center text-slate-400 text-xs">
+            <i data-lucide="receipt" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+            No quotations submitted yet. Discover open RFQs to submit bids.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

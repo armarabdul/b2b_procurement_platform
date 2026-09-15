@@ -1,0 +1,95 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}{{ rfq.rfq_number }} - Tender Requirement{% endblock %}
+{% block breadcrumbs %}Marketplace &rsaquo; <a href="{% url 'supplier_portal:rfq_discovery' %}" class="hover:underline">RFQs</a> &rsaquo; {{ rfq.rfq_number }}{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6 max-w-4xl mx-auto">
+
+    <!-- HEADER SUMMARY CARD -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{{ rfq.rfq_number }}</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider badge-status-{{ rfq.status }}">
+                        {{ rfq.get_status_display }}
+                    </span>
+                    <span class="text-xs text-slate-500 font-medium">| {{ rfq.category.name }}</span>
+                </div>
+                <h1 class="text-2xl font-heading font-extrabold text-slate-900">{{ rfq.title }}</h1>
+                <p class="text-xs text-slate-500 mt-1">Issued by <strong>{{ rfq.customer.company_name }}</strong> in {{ rfq.get_emirate_display }}</p>
+            </div>
+
+            <div class="shrink-0">
+                {% if rfq.can_submit_quotation %}
+                <a href="{% url 'supplier_portal:submit_quotation' rfq.id %}" class="inline-flex items-center px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5">
+                    <i data-lucide="send" class="w-4 h-4 mr-2"></i>
+                    {% if existing_quotation %}Modify Your Quotation{% else %}Submit Quotation Against RFQ{% endif %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs">
+            <div>
+                <span class="block text-slate-400 font-semibold uppercase tracking-wider">Delivery Site</span>
+                <span class="font-medium text-slate-800 mt-1 block">{{ rfq.delivery_location }} ({{ rfq.get_emirate_display }})</span>
+            </div>
+            <div>
+                <span class="block text-slate-400 font-semibold uppercase tracking-wider">Required Delivery Date</span>
+                <span class="font-medium text-slate-800 mt-1 block">{{ rfq.delivery_deadline|date:"d M Y" }}</span>
+            </div>
+            <div>
+                <span class="block text-slate-400 font-semibold uppercase tracking-wider">Bidding Deadline</span>
+                <span class="font-medium text-slate-800 mt-1 block {% if rfq.is_expired %}text-red-600 font-bold{% endif %}">
+                    {{ rfq.submission_deadline|date:"d M Y H:i" }}
+                    {% if rfq.is_expired %}(Closed){% endif %}
+                </span>
+            </div>
+            <div>
+                <span class="block text-slate-400 font-semibold uppercase tracking-wider">Preferred Terms</span>
+                <span class="font-medium text-slate-800 mt-1 block">{{ rfq.preferred_terms }}</span>
+            </div>
+        </div>
+
+        <div class="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed">
+            <strong class="font-semibold text-slate-900 block mb-1">Requirement Scope:</strong>
+            {{ rfq.description|linebreaksbr }}
+        </div>
+    </div>
+
+    <!-- REQUIRED LINE ITEMS -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-heading font-bold text-base text-slate-900">Items to Quote</h3>
+            <span class="text-xs text-slate-500">{{ rfq.items.count }} items required</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">#</th>
+                        <th class="py-3 px-4">Item Name</th>
+                        <th class="py-3 px-4">Required Quantity</th>
+                        <th class="py-3 px-4">Technical Specifications</th>
+                        <th class="py-3 px-4">Preferred Brand</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for item in rfq.items.all %}
+                    <tr class="hover:bg-slate-50/60">
+                        <td class="py-3.5 px-4 text-slate-400">{{ forloop.counter }}</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-900">{{ item.item_name }}</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-800">{{ item.quantity|floatformat:0 }} {{ item.unit }}</td>
+                        <td class="py-3.5 px-4 text-slate-600 max-w-xs">{{ item.specifications|default:"Standard commercial grade" }}</td>
+                        <td class="py-3.5 px-4 text-slate-600">{{ item.preferred_brand|default:"Open" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

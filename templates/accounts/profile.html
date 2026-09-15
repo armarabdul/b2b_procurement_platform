@@ -1,0 +1,80 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Profile & Entity Settings{% endblock %}
+{% block breadcrumbs %}Account &rsaquo; Organization Profile{% endblock %}
+
+{% block portal_content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+        <div class="flex items-center space-x-4 pb-6 border-b border-slate-100">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-slate-900 to-indigo-700 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                {{ user.first_name|default:user.username|slice:":2"|upper }}
+            </div>
+            <div>
+                <h2 class="text-xl font-heading font-bold text-slate-900">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="text-xs text-slate-500 font-medium">{{ user.email }} | {{ user.company_name }}</p>
+                <div class="mt-2 flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {{ user.get_role_display }}
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                        Status: {{ user.get_approval_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Company Legal Name</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.company_name|default:"Not specified" }}</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Phone / WhatsApp</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.phone|default:"Not specified" }}</p>
+            </div>
+
+            {% if user.customer_profile %}
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">UAE Trade License / DED</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.customer_profile.trade_license_number }}</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">FTA TRN Number</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.customer_profile.tax_registration_number|default:"Not registered" }}</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Emirate</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.customer_profile.get_emirate_display }}</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Office Address</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.customer_profile.office_address }}</p>
+            </div>
+            {% endif %}
+
+            {% if user.supplier_profile %}
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">UAE Trade License / DED</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.supplier_profile.trade_license_number }}</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Emirate</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.supplier_profile.get_emirate_display }}</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Supplier Performance Rating</label>
+                <p class="mt-1 text-amber-600 font-bold flex items-center">
+                    <i data-lucide="star" class="w-4 h-4 fill-amber-400 text-amber-400 mr-1"></i>
+                    {{ user.supplier_profile.supplier_rating }} / 5.00
+                </p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Categories</label>
+                <p class="mt-1 text-slate-900 font-medium">{{ user.supplier_profile.business_categories }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

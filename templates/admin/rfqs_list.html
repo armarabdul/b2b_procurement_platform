@@ -1,0 +1,70 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Global RFQs & Procurement Activity{% endblock %}
+{% block breadcrumbs %}Admin &rsaquo; All RFQs{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">All Procurement Requirements</h2>
+            <p class="text-xs text-slate-500">Monitor tenders across all UAE buyers and suppliers</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">RFQ Ref & Title</th>
+                        <th class="py-3 px-4">Corporate Buyer</th>
+                        <th class="py-3 px-4">Category / Emirate</th>
+                        <th class="py-3 px-4">Bids Received</th>
+                        <th class="py-3 px-4">Closing Deadline</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 text-right">Admin Controls</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for rfq in rfqs %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-4">
+                            <span class="font-mono text-indigo-600 font-bold block">{{ rfq.rfq_number }}</span>
+                            <span class="font-bold text-slate-900">{{ rfq.title }}</span>
+                        </td>
+                        <td class="py-3.5 px-4 font-semibold text-slate-800">{{ rfq.customer.company_name }}</td>
+                        <td class="py-3.5 px-4">{{ rfq.category.name }} ({{ rfq.get_emirate_display }})</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-900">
+                            {{ rfq.quotations.count }} bids
+                        </td>
+                        <td class="py-3.5 px-4">{{ rfq.submission_deadline|date:"d M Y H:i" }}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase badge-status-{{ rfq.status }}">
+                                {{ rfq.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right space-x-1">
+                            <a href="{% url 'customer_portal:rfq_detail' rfq.id %}" class="px-2.5 py-1 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 text-[11px] font-semibold">
+                                View
+                            </a>
+                            {% if rfq.status == 'PUBLISHED' or rfq.status == 'QUOTATIONS_RECEIVED' %}
+                            <a href="{% url 'admin_portal:rfq_toggle_status' rfq.id 'CANCELLED' %}" class="px-2.5 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 text-[11px] font-semibold">
+                                Close RFQ
+                            </a>
+                            {% elif rfq.status == 'CANCELLED' %}
+                            <a href="{% url 'admin_portal:rfq_toggle_status' rfq.id 'PUBLISHED' %}" class="px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-semibold">
+                                Reopen
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">No RFQs recorded.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

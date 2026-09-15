@@ -1,0 +1,59 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Notifications Center{% endblock %}
+{% block breadcrumbs %}Account &rsaquo; In-App Notifications{% endblock %}
+
+{% block portal_content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Notifications</h2>
+            <p class="text-xs text-slate-500">RFQ updates, quotation alerts, award letters, and payment notices</p>
+        </div>
+        <a href="{% url 'notifications:mark_all_read' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+            Mark all as read
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100 overflow-hidden">
+        {% for notif in notifications %}
+        <a href="{% url 'notifications:mark_read' notif.id %}" class="block p-5 hover:bg-slate-50 transition {% if not notif.is_read %}bg-indigo-50/30{% endif %}">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5
+                        {% if notif.notification_type == 'AWARD' %}bg-emerald-100 text-emerald-700
+                        {% elif notif.notification_type == 'PAYMENT' %}bg-blue-100 text-blue-700
+                        {% elif notif.notification_type == 'WARNING' %}bg-amber-100 text-amber-700
+                        {% else %}bg-slate-100 text-slate-700{% endif %}">
+                        {% if notif.notification_type == 'AWARD' %}
+                            <i data-lucide="award" class="w-4 h-4"></i>
+                        {% elif notif.notification_type == 'PAYMENT' %}
+                            <i data-lucide="credit-card" class="w-4 h-4"></i>
+                        {% elif notif.notification_type == 'WARNING' %}
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                        {% else %}
+                            <i data-lucide="bell" class="w-4 h-4"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                            {{ notif.title }}
+                            {% if not notif.is_read %}
+                            <span class="w-2 h-2 rounded-full bg-indigo-600 ml-2"></span>
+                            {% endif %}
+                        </h3>
+                        <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ notif.message }}</p>
+                    </div>
+                </div>
+                <span class="text-[11px] text-slate-400 shrink-0 whitespace-nowrap">{{ notif.created_at|timesince }} ago</span>
+            </div>
+        </a>
+        {% empty %}
+        <div class="p-12 text-center text-slate-400 text-xs">
+            <i data-lucide="bell-off" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+            You have no notifications at this time.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

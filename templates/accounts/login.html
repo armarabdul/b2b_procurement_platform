@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In | ProcureHub UAE{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div class="absolute inset-0 -z-10 opacity-20 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:20px_20px]"></div>
+
+    <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <a href="{% url 'landing' %}" class="inline-flex items-center space-x-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/30">
+                P
+            </div>
+            <span class="font-heading font-extrabold text-2xl tracking-tight text-white">Procure<span class="text-emerald-400">Hub</span></span>
+        </a>
+        <h2 class="mt-4 text-2xl font-heading font-bold text-white tracking-tight">Enterprise Portal Access</h2>
+        <p class="text-xs text-slate-400 mt-1">Authorized corporate buyers, registered suppliers & admins</p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
+        <div class="bg-white py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-100">
+
+            <!-- FAST DEMO PERSONA SWITCHER BOX -->
+            <div class="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                    1-Click Demo Persona Login:
+                </span>
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="{% url 'accounts:quick_switch' 'customer' %}" class="flex items-center p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold border border-emerald-200 transition">
+                        <i data-lucide="building" class="w-3.5 h-3.5 mr-1.5 text-emerald-600"></i>
+                        Buyer (Al-Futtaim)
+                    </a>
+                    <a href="{% url 'accounts:quick_switch' 'admin' %}" class="flex items-center p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-xs font-semibold border border-indigo-200 transition">
+                        <i data-lucide="shield" class="w-3.5 h-3.5 mr-1.5 text-indigo-600"></i>
+                        Procurement Admin
+                    </a>
+                    <a href="{% url 'accounts:quick_switch' 'supplier1' %}" class="flex items-center p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-semibold border border-blue-200 transition">
+                        <i data-lucide="truck" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>
+                        Supplier 1 (Emirates)
+                    </a>
+                    <a href="{% url 'accounts:quick_switch' 'supplier2' %}" class="flex items-center p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-semibold border border-blue-200 transition">
+                        <i data-lucide="truck" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>
+                        Supplier 2 (Gulf)
+                    </a>
+                </div>
+            </div>
+
+            <div class="relative my-4">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-slate-400 font-semibold">Or sign in with credentials</span></div>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Email Address or Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <p class="text-xs text-red-600 mt-1">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <p class="text-xs text-red-600 mt-1">{{ form.password.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+                    {{ form.non_field_errors.0 }}
+                </div>
+                {% endif %}
+
+                <button type="submit" class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition transform hover:-translate-y-0.5">
+                    Sign In to Portal
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-500 space-y-2">
+                <p>New enterprise buyer? <a href="{% url 'accounts:register_customer' %}" class="font-semibold text-emerald-600 hover:text-emerald-700">Register corporate account</a></p>
+                <p>Commercial supplier? <a href="{% url 'accounts:register_supplier' %}" class="font-semibold text-blue-600 hover:text-blue-700">Register as verified vendor</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

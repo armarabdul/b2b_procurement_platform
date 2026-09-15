@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}400 - Bad Request | ProcureHub UAE{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-900 flex flex-col justify-center items-center px-4 text-center">
+    <div class="max-w-md bg-white p-8 rounded-3xl shadow-2xl border border-slate-100">
+        <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+        </div>
+        <h1 class="text-3xl font-heading font-black text-slate-900">400</h1>
+        <h2 class="text-base font-bold text-slate-800 mt-1">Invalid Procurement Request</h2>
+        <p class="text-xs text-slate-500 mt-2">The server could not process your request due to malformed syntax or parameters.</p>
+        <div class="mt-6">
+            <a href="{% url 'accounts:dashboard_redirect' %}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
+                Return to Dashboard &rarr;
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

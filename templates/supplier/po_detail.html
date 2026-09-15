@@ -1,0 +1,190 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}{{ po.po_number }} - Purchase Order Fulfillment{% endblock %}
+{% block breadcrumbs %}Vendor Portal &rsaquo; <a href="{% url 'supplier_portal:orders_list' %}" class="hover:underline">Orders</a> &rsaquo; {{ po.po_number }}{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-8 max-w-5xl mx-auto">
+
+    <!-- ACTION HEADER (NO PRINT) -->
+    <div class="no-print flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-heading font-bold text-slate-900">Purchase Order Contract Fulfillment</h1>
+            <p class="text-xs text-slate-500">Issued by {{ po.customer.company_name }} for {{ po.currency }} {{ po.total_amount|floatformat:2 }}</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button type="button" onclick="window.print()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm transition">
+                <i data-lucide="printer" class="w-4 h-4 mr-2 text-slate-500"></i>
+                Print Order Document
+            </button>
+        </div>
+    </div>
+
+    <!-- STATUS UPDATE CONTROLS (NO PRINT) -->
+    <div class="no-print bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Current Order Fulfillment Status</span>
+            <span class="text-lg font-bold text-slate-900">{{ po.get_status_display }}</span>
+        </div>
+
+        <form method="POST" action="{% url 'supplier_portal:update_order_status' po.id %}" class="flex items-center space-x-2">
+            {% csrf_token %}
+            <select name="status" class="form-input-field text-xs">
+                {% for code, label in status_choices %}
+                    <option value="{{ code }}" {% if po.status == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow transition shrink-0">
+                Update Status
+            </button>
+        </form>
+    </div>
+
+    <!-- OFFICIAL PO DOCUMENT -->
+    <div class="printable-card bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 pb-8 border-b-2 border-slate-900">
+            <div>
+                <div class="flex items-center space-x-2.5 mb-2">
+                    <div class="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black text-sm">P</div>
+                    <span class="font-heading font-extrabold text-xl text-slate-900">Procure<span class="text-blue-600">Hub</span></span>
+                </div>
+                <h2 class="text-2xl font-heading font-black text-slate-900 uppercase">OFFICIAL PURCHASE ORDER</h2>
+                <p class="font-mono text-xs font-bold text-blue-600 mt-1">PO NUMBER: {{ po.po_number }}</p>
+                <p class="text-xs text-slate-500">RFQ: {{ po.rfq.rfq_number }} | Quote: {{ po.quotation.quotation_number }}</p>
+            </div>
+
+            <div class="text-left sm:text-right space-y-1 text-xs">
+                <span class="inline-flex items-center px-3 py-1 rounded-full font-bold uppercase tracking-wider text-xs
+                    {% if po.status == 'COMPLETED' or po.status == 'DELIVERED' %}bg-emerald-100 text-emerald-800
+                    {% elif po.status == 'PROCESSING' or po.status == 'SHIPPED' %}bg-blue-100 text-blue-800
+                    {% else %}bg-slate-100 text-slate-800{% endif %}">
+                    STATUS: {{ po.get_status_display }}
+                </span>
+                <p class="text-slate-600 pt-2"><strong class="text-slate-900">Issued:</strong> {{ po.created_at|date:"d M Y" }}</p>
+                <p class="text-slate-600"><strong class="text-slate-900">Delivery Deadline:</strong> {{ po.expected_delivery_date|date:"d M Y"|default:"As contracted" }}</p>
+                <p class="text-slate-600"><strong class="text-slate-900">Currency:</strong> {{ po.currency }}</p>
+            </div>
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-8 text-xs leading-relaxed">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">BUYER / DELIVER TO</span>
+                <p class="text-sm font-bold text-slate-900">{{ po.customer.company_name }}</p>
+                <p class="text-slate-600 mt-1">{{ po.delivery_address }}</p>
+                <p class="text-slate-600">Contact: {{ po.customer.get_full_name }} ({{ po.customer.phone }})</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">VENDOR</span>
+                <p class="text-sm font-bold text-slate-900">{{ po.supplier.company_name }}</p>
+                <p class="text-slate-600 mt-1">{{ po.supplier.supplier_profile.office_address }}</p>
+                <p class="text-slate-600">Tel: {{ po.supplier.phone }}</p>
+            </div>
+        </div>
+
+        <!-- ITEMS -->
+        <div class="mt-8">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="border-b-2 border-slate-300 uppercase font-bold text-slate-600 bg-slate-100">
+                    <tr>
+                        <th class="py-3 px-3">#</th>
+                        <th class="py-3 px-3">Item Description</th>
+                        <th class="py-3 px-3 text-right">Quantity</th>
+                        <th class="py-3 px-3 text-right">Unit Price</th>
+                        <th class="py-3 px-3 text-right">VAT Rate</th>
+                        <th class="py-3 px-3 text-right">Amount (AED)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for item in po.items.all %}
+                    <tr>
+                        <td class="py-3.5 px-3 text-slate-400 font-mono">{{ forloop.counter }}</td>
+                        <td class="py-3.5 px-3 font-semibold text-slate-900">{{ item.item_name }}</td>
+                        <td class="py-3.5 px-3 text-right font-mono">{{ item.quantity|floatformat:0 }} {{ item.unit }}</td>
+                        <td class="py-3.5 px-3 text-right font-mono">AED {{ item.unit_price|floatformat:2 }}</td>
+                        <td class="py-3.5 px-3 text-right font-mono">{{ item.tax_rate }}%</td>
+                        <td class="py-3.5 px-3 text-right font-bold text-slate-900 font-mono">AED {{ item.line_total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- TOTALS -->
+        <div class="mt-6 flex flex-col sm:flex-row justify-between items-start gap-6 pt-4 border-t border-slate-200">
+            <div class="text-xs text-slate-500 max-w-sm">
+                <strong class="text-slate-800 block mb-1">Commercial & Delivery Terms:</strong>
+                <p>{{ po.payment_terms }}</p>
+            </div>
+
+            <div class="w-full sm:w-72 space-y-2 text-xs">
+                <div class="flex justify-between text-slate-600">
+                    <span>Subtotal:</span>
+                    <span class="font-mono">AED {{ po.subtotal|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-slate-600">
+                    <span>Standard UAE VAT (5%):</span>
+                    <span class="font-mono">AED {{ po.tax_amount|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-base font-black text-slate-900 pt-2 border-t-2 border-slate-900">
+                    <span>TOTAL CONTRACT VALUE:</span>
+                    <span class="font-mono">AED {{ po.total_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT INSTALLMENTS RECEIVED TRACKER (NO PRINT) -->
+    {% if payment %}
+    <div class="no-print bg-white rounded-3xl border border-slate-200 p-8 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+                <h3 class="font-heading font-bold text-base text-slate-900">Commercial Settlement Status</h3>
+                <p class="text-xs text-slate-500">Payments disbursed by the buyer under this contract</p>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase
+                {% if payment.status == 'PAID' %}bg-emerald-100 text-emerald-800
+                {% elif payment.status == 'PARTIALLY_PAID' %}bg-amber-100 text-amber-800
+                {% else %}bg-slate-100 text-slate-800{% endif %}">
+                {{ payment.get_status_display }} (AED {{ payment.amount_paid|floatformat:2 }} / {{ payment.total_amount|floatformat:2 }})
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">Installment</th>
+                        <th class="py-3 px-4">Amount</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4">Paid Timestamp</th>
+                        <th class="py-3 px-4">Transaction Ref</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for inst in payment.installments.all %}
+                    <tr>
+                        <td class="py-3.5 px-4 font-bold text-slate-900">{{ inst.title }}</td>
+                        <td class="py-3.5 px-4 font-bold font-mono">AED {{ inst.amount|floatformat:2 }}</td>
+                        <td class="py-3.5 px-4">
+                            {% if inst.is_paid %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
+                                <i data-lucide="check" class="w-3 h-3 mr-1 text-emerald-600"></i> Transferred to Escrow
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-600">
+                                Awaiting Buyer Release
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-500 font-mono text-[11px]">{{ inst.paid_at|date:"d M Y H:i"|default:"--" }}</td>
+                        <td class="py-3.5 px-4 text-slate-500 font-mono text-[11px]">{{ inst.transaction_reference|default:"--" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

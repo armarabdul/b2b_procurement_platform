@@ -1,0 +1,259 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}{{ po.po_number }} - Purchase Order{% endblock %}
+{% block breadcrumbs %}Procurement &rsaquo; <a href="{% url 'customer_portal:orders_list' %}" class="hover:underline">Orders</a> &rsaquo; {{ po.po_number }}{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-8 max-w-5xl mx-auto">
+
+    <!-- ACTION CONTROLS (NO PRINT) -->
+    <div class="no-print flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-heading font-bold text-slate-900">Official Purchase Order & Commercial Settlement</h1>
+            <p class="text-xs text-slate-500">Legal contract binding {{ po.customer.company_name }} and {{ po.supplier.company_name }}</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button type="button" onclick="window.print()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm transition">
+                <i data-lucide="printer" class="w-4 h-4 mr-2 text-slate-500"></i>
+                Print Official PO / PDF
+            </button>
+            <a href="#payment-section" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition">
+                <i data-lucide="credit-card" class="w-4 h-4 mr-2"></i>
+                Simulate Payment
+            </a>
+        </div>
+    </div>
+
+    <!-- PRINTABLE OFFICIAL PO DOCUMENT -->
+    <div class="printable-card bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 shadow-sm relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 pb-8 border-b-2 border-slate-900">
+            <div>
+                <div class="flex items-center space-x-2.5 mb-2">
+                    <div class="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black text-sm">
+                        P
+                    </div>
+                    <span class="font-heading font-extrabold text-xl text-slate-900">Procure<span class="text-emerald-600">Hub</span></span>
+                </div>
+                <h2 class="text-2xl font-heading font-black text-slate-900 uppercase tracking-tight">PURCHASE ORDER</h2>
+                <p class="font-mono text-xs font-bold text-indigo-600 mt-1">PO NUMBER: {{ po.po_number }}</p>
+                <p class="text-xs text-slate-500">RFQ Ref: {{ po.rfq.rfq_number }} | Quote: {{ po.quotation.quotation_number }}</p>
+            </div>
+
+            <div class="text-left sm:text-right space-y-1 text-xs">
+                <span class="inline-flex items-center px-3 py-1 rounded-full font-bold uppercase tracking-wider text-xs
+                    {% if po.status == 'COMPLETED' or po.status == 'DELIVERED' %}bg-emerald-100 text-emerald-800
+                    {% elif po.status == 'PROCESSING' or po.status == 'SHIPPED' %}bg-blue-100 text-blue-800
+                    {% else %}bg-slate-100 text-slate-800{% endif %}">
+                    STATUS: {{ po.get_status_display }}
+                </span>
+                <p class="text-slate-600 pt-2"><strong class="text-slate-900">Date Issued:</strong> {{ po.created_at|date:"d M Y" }}</p>
+                <p class="text-slate-600"><strong class="text-slate-900">Delivery Due:</strong> {{ po.expected_delivery_date|date:"d M Y"|default:"As per contract" }}</p>
+                <p class="text-slate-600"><strong class="text-slate-900">Currency:</strong> {{ po.currency }} (UAE Dirhams)</p>
+            </div>
+        </div>
+
+        <!-- BUYER & SUPPLIER ADDRESS COLUMNS -->
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-8 text-xs leading-relaxed">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">BUYER / BILL TO</span>
+                <p class="text-sm font-bold text-slate-900">{{ po.customer.company_name }}</p>
+                <p class="text-slate-600 mt-1">Attn: {{ po.customer.get_full_name }}</p>
+                <p class="text-slate-600">{{ po.delivery_address }}</p>
+                <p class="text-slate-600">Email: {{ po.customer.email }} | Tel: {{ po.customer.phone }}</p>
+                {% if po.customer.customer_profile.tax_registration_number %}
+                <p class="text-slate-700 font-mono mt-1"><strong>FTA TRN:</strong> {{ po.customer.customer_profile.tax_registration_number }}</p>
+                {% endif %}
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">SUPPLIER / VENDOR</span>
+                <p class="text-sm font-bold text-slate-900">{{ po.supplier.company_name }}</p>
+                <p class="text-slate-600 mt-1">Commercial Rep: {{ po.supplier.get_full_name }}</p>
+                <p class="text-slate-600">{{ po.supplier.supplier_profile.office_address }}</p>
+                <p class="text-slate-600">Email: {{ po.supplier.email }} | Tel: {{ po.supplier.phone }}</p>
+                {% if po.supplier.supplier_profile.trade_license_number %}
+                <p class="text-slate-700 font-mono mt-1"><strong>UAE Trade License:</strong> {{ po.supplier.supplier_profile.trade_license_number }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ORDER ITEMS TABLE -->
+        <div class="mt-8">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="border-b-2 border-slate-300 uppercase font-bold text-slate-600 bg-slate-100">
+                    <tr>
+                        <th class="py-3 px-3">#</th>
+                        <th class="py-3 px-3">Item Description</th>
+                        <th class="py-3 px-3 text-right">Quantity</th>
+                        <th class="py-3 px-3 text-right">Unit Price</th>
+                        <th class="py-3 px-3 text-right">VAT Rate</th>
+                        <th class="py-3 px-3 text-right">Amount (AED)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for item in po.items.all %}
+                    <tr>
+                        <td class="py-3.5 px-3 text-slate-400 font-mono">{{ forloop.counter }}</td>
+                        <td class="py-3.5 px-3 font-semibold text-slate-900">{{ item.item_name }}</td>
+                        <td class="py-3.5 px-3 text-right font-mono">{{ item.quantity|floatformat:0 }} {{ item.unit }}</td>
+                        <td class="py-3.5 px-3 text-right font-mono">AED {{ item.unit_price|floatformat:2 }}</td>
+                        <td class="py-3.5 px-3 text-right font-mono">{{ item.tax_rate }}%</td>
+                        <td class="py-3.5 px-3 text-right font-bold text-slate-900 font-mono">AED {{ item.line_total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- TOTALS SUMMARY -->
+        <div class="mt-6 flex flex-col sm:flex-row justify-between items-start gap-6 pt-4 border-t border-slate-200">
+            <div class="text-xs text-slate-500 max-w-sm">
+                <strong class="text-slate-800 block mb-1">Commercial & Delivery Terms:</strong>
+                <p>{{ po.payment_terms }}</p>
+                <p class="mt-1 text-slate-400">{{ po.special_instructions }}</p>
+            </div>
+
+            <div class="w-full sm:w-72 space-y-2 text-xs">
+                <div class="flex justify-between text-slate-600">
+                    <span>Subtotal:</span>
+                    <span class="font-mono">AED {{ po.subtotal|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-slate-600">
+                    <span>Standard UAE VAT (5%):</span>
+                    <span class="font-mono">AED {{ po.tax_amount|floatformat:2 }}</span>
+                </div>
+                {% if po.discount_amount > 0 %}
+                <div class="flex justify-between text-emerald-600 font-medium">
+                    <span>Discount:</span>
+                    <span class="font-mono">- AED {{ po.discount_amount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between text-base font-black text-slate-900 pt-2 border-t-2 border-slate-900">
+                    <span>GRAND TOTAL:</span>
+                    <span class="font-mono">AED {{ po.total_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIGNATURE BLOCKS -->
+        <div class="mt-16 pt-8 border-t border-slate-200 grid grid-cols-2 gap-8 text-xs text-slate-500">
+            <div>
+                <div class="h-12 border-b border-slate-300"></div>
+                <p class="mt-2 font-bold text-slate-800">Authorized Corporate Buyer Signature</p>
+                <p>{{ po.customer.company_name }}</p>
+            </div>
+            <div>
+                <div class="h-12 border-b border-slate-300"></div>
+                <p class="mt-2 font-bold text-slate-800">Supplier Commercial Officer Acceptance</p>
+                <p>{{ po.supplier.company_name }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOCK PAYMENT & COMMERCIAL SETTLEMENT SECTION (NO PRINT) -->
+    <div id="payment-section" class="no-print bg-white rounded-3xl border border-slate-200 p-8 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-500 text-slate-950">DEMO SANDBOX</span>
+                    <h2 class="text-xl font-heading font-extrabold text-slate-900">Payment & Escrow Management</h2>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">Abstracted UAE Payment Gateway Interface (Stripe UAE, Telr, Network International)</p>
+            </div>
+
+            <!-- PAYMENT STATUS BADGE -->
+            {% if payment %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+                {% if payment.status == 'PAID' %}bg-emerald-100 text-emerald-800 border border-emerald-300
+                {% elif payment.status == 'PARTIALLY_PAID' %}bg-amber-100 text-amber-800 border border-amber-300
+                {% else %}bg-slate-100 text-slate-800 border border-slate-300{% endif %}">
+                <span class="w-2 h-2 rounded-full mr-1.5 {% if payment.status == 'PAID' %}bg-emerald-500{% elif payment.status == 'PARTIALLY_PAID' %}bg-amber-500 animate-pulse{% else %}bg-slate-400{% endif %}"></span>
+                {{ payment.get_status_display }} (AED {{ payment.amount_paid|floatformat:2 }} / {{ payment.total_amount|floatformat:2 }})
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- PAYMENT PLAN SELECTOR -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <form method="POST" action="{% url 'customer_portal:update_payment_plan' po.id %}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {% csrf_token %}
+                <div class="text-xs">
+                    <label class="block font-bold text-slate-800 mb-1">Selected Commercial Payment Plan:</label>
+                    <select name="payment_plan" class="form-input-field text-xs sm:w-80">
+                        {% for code, label in plan_choices %}
+                            <option value="{{ code }}" {% if payment.payment_plan == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition shrink-0">
+                    Apply Plan Split
+                </button>
+            </form>
+        </div>
+
+        <!-- INSTALLMENTS BREAKDOWN TABLE -->
+        {% if payment %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">Stage / Installment</th>
+                        <th class="py-3 px-4">Share</th>
+                        <th class="py-3 px-4">Amount (AED)</th>
+                        <th class="py-3 px-4">Due Date</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4">Txn Ref</th>
+                        <th class="py-3 px-4 text-right">Demo Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for inst in payment.installments.all %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-4 font-bold text-slate-900">{{ inst.title }}</td>
+                        <td class="py-3.5 px-4 text-slate-500">{{ inst.percentage|floatformat:1 }}%</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-900 font-mono">AED {{ inst.amount|floatformat:2 }}</td>
+                        <td class="py-3.5 px-4 text-slate-500">{{ inst.due_date|date:"d M Y" }}</td>
+                        <td class="py-3.5 px-4">
+                            {% if inst.is_paid %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
+                                <i data-lucide="check-circle" class="w-3 h-3 mr-1 text-emerald-600"></i> Paid
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-50 text-amber-800 border border-amber-200">
+                                Pending
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-4 font-mono text-[10px] text-slate-500">
+                            {{ inst.transaction_reference|default:"--" }}
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            {% if not inst.is_paid %}
+                            <form method="POST" action="{% url 'customer_portal:simulate_payment' inst.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="inline-flex items-center px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition transform hover:scale-105">
+                                    <i data-lucide="play" class="w-3.5 h-3.5 mr-1"></i>
+                                    Simulate Payment
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-xs text-slate-400 font-medium">Settled</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <div class="p-4 rounded-xl bg-blue-50/60 border border-blue-200 text-xs text-blue-900 flex items-start space-x-3">
+            <i data-lucide="shield-check" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+            <div>
+                <strong class="font-bold">Production Payment Gateway Ready:</strong>
+                All payment operations invoke the abstracted `BasePaymentGatewayService`. For production deployment, you can configure your UAE merchant account keys (Telr, Stripe, Network International, or UAE Central Bank direct debit) in environment variables without altering the core checkout or order models.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

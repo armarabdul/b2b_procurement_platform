@@ -1,0 +1,93 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}My Procurement Requirements (RFQs){% endblock %}
+{% block breadcrumbs %}Procurement &rsaquo; RFQs{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+
+    <!-- TOP HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Procurement Requisitions</h2>
+            <p class="text-xs text-slate-500">Track quotes, review proposals, and initiate purchase contracts</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'customer_portal:rfq_create' %}" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition">
+                <i data-lucide="plus" class="w-4 h-4 mr-1.5"></i>
+                Create New RFQ
+            </a>
+        </div>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="flex items-center space-x-2 overflow-x-auto pb-2 border-b border-slate-200 text-xs font-semibold">
+        <a href="{% url 'customer_portal:rfq_list' %}" class="px-3 py-1.5 rounded-lg transition {% if not selected_status %}bg-slate-900 text-white{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+            All Requirements
+        </a>
+        <a href="?status=PUBLISHED" class="px-3 py-1.5 rounded-lg transition {% if selected_status == 'PUBLISHED' %}bg-blue-600 text-white{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+            Published
+        </a>
+        <a href="?status=QUOTATIONS_RECEIVED" class="px-3 py-1.5 rounded-lg transition {% if selected_status == 'QUOTATIONS_RECEIVED' %}bg-amber-600 text-white{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+            Quotes Received
+        </a>
+        <a href="?status=AWARDED" class="px-3 py-1.5 rounded-lg transition {% if selected_status == 'AWARDED' %}bg-emerald-600 text-white{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+            Awarded
+        </a>
+        <a href="?status=DRAFT" class="px-3 py-1.5 rounded-lg transition {% if selected_status == 'DRAFT' %}bg-slate-700 text-white{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+            Drafts
+        </a>
+    </div>
+
+    <!-- RFQs LIST -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100 overflow-hidden">
+        {% for rfq in rfqs %}
+        <div class="p-5 hover:bg-slate-50 transition flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="space-y-1.5">
+                <div class="flex items-center space-x-2">
+                    <span class="font-mono text-xs font-bold text-indigo-600">{{ rfq.rfq_number }}</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider badge-status-{{ rfq.status }}">
+                        {{ rfq.get_status_display }}
+                    </span>
+                    <span class="text-xs text-slate-400 font-medium">| {{ rfq.category.name }}</span>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 hover:text-emerald-600">
+                    <a href="{% url 'customer_portal:rfq_detail' rfq.id %}">{{ rfq.title }}</a>
+                </h3>
+                <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500">
+                    <span><i data-lucide="map-pin" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>{{ rfq.delivery_location }} ({{ rfq.get_emirate_display }})</span>
+                    <span><i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Delivery Target: {{ rfq.delivery_deadline|date:"M d, Y" }}</span>
+                    <span><i data-lucide="clock" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Deadline: {{ rfq.submission_deadline|date:"M d, Y H:i" }}</span>
+                    <span><i data-lucide="layers" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>{{ rfq.items.count }} items</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3 shrink-0">
+                {% if rfq.total_quotations_count > 0 %}
+                <a href="{% url 'customer_portal:quotation_comparison' rfq.id %}" class="inline-flex items-center px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 mr-1.5"></i>
+                    Compare Quotations ({{ rfq.total_quotations_count }})
+                </a>
+                {% endif %}
+
+                <a href="{% url 'customer_portal:rfq_detail' rfq.id %}" class="inline-flex items-center px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition">
+                    View Details
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1.5 text-slate-400"></i>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-12 text-center text-slate-400">
+            <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+            <p class="text-sm font-semibold text-slate-600">No procurement requirements found</p>
+            <p class="text-xs text-slate-400 mt-1">Get started by creating your first corporate RFQ.</p>
+            <div class="mt-4">
+                <a href="{% url 'customer_portal:rfq_create' %}" class="inline-flex items-center px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs">
+                    + Create RFQ
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

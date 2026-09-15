@@ -1,0 +1,55 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Global Quotations Oversight{% endblock %}
+{% block breadcrumbs %}Admin &rsaquo; Quotations{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Submitted Commercial Quotations</h2>
+            <p class="text-xs text-slate-500">Monitor supplier bid activity across the marketplace</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">Quote No.</th>
+                        <th class="py-3 px-4">RFQ Requirement</th>
+                        <th class="py-3 px-4">Supplier Vendor</th>
+                        <th class="py-3 px-4">Lead Time</th>
+                        <th class="py-3 px-4">Payment Terms</th>
+                        <th class="py-3 px-4">Grand Total</th>
+                        <th class="py-3 px-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for q in quotations %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-4 font-mono font-bold text-indigo-600">{{ q.quotation_number }}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="font-bold text-slate-900">{{ q.rfq.rfq_number }}</span>
+                            <span class="text-slate-400 block text-[10px]">{{ q.rfq.title }}</span>
+                        </td>
+                        <td class="py-3.5 px-4 font-semibold text-slate-800">{{ q.supplier.company_name }}</td>
+                        <td class="py-3.5 px-4">{{ q.delivery_days }} Days</td>
+                        <td class="py-3.5 px-4 text-slate-600">{{ q.payment_terms }}</td>
+                        <td class="py-3.5 px-4 font-mono font-bold text-slate-900">AED {{ q.grand_total|floatformat:2 }}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase badge-status-{{ q.status }}">
+                                {{ q.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">No quotations recorded.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

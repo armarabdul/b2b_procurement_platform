@@ -1,0 +1,1 @@
+"""ProcureHub applications module."""

@@ -1,0 +1,189 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Executive Administration & Oversight{% endblock %}
+{% block breadcrumbs %}Platform Administration &rsaquo; Command Center{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-8">
+
+    <!-- HERO / BANNER -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 p-6 sm:p-8 text-white shadow-xl border border-slate-800">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 mb-3">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-1.5 animate-pulse"></span>
+                    ProcureHub Platform Governance
+                </span>
+                <h1 class="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight">
+                    Super-Admin Command Center
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                    Verify corporate entities, monitor RFQs, inspect quotation submissions, audit contract awards, and track mock settlement transactions.
+                </p>
+            </div>
+            <div class="flex items-center space-x-3 shrink-0">
+                <a href="{% url 'admin_portal:audit_logs' %}" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition">
+                    <i data-lucide="shield-check" class="w-4 h-4 mr-2 text-indigo-400"></i>
+                    Audit Trail
+                </a>
+                <a href="/admin/" target="_blank" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition">
+                    <i data-lucide="database" class="w-4 h-4 mr-2"></i>
+                    Django Backend
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8 KPI STATS MATRIX -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+        <!-- Customers -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Enterprise Buyers</span>
+            <div class="text-2xl font-heading font-extrabold text-slate-900 mt-2">{{ stats.total_customers }}</div>
+            <a href="{% url 'admin_portal:customers' %}" class="text-xs text-indigo-600 hover:underline mt-1 inline-block">Manage Buyers &rarr;</a>
+        </div>
+
+        <!-- Suppliers -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Registered Suppliers</span>
+            <div class="text-2xl font-heading font-extrabold text-slate-900 mt-2">{{ stats.total_suppliers }}</div>
+            <a href="{% url 'admin_portal:suppliers' %}" class="text-xs text-indigo-600 hover:underline mt-1 inline-block">Manage Vendors &rarr;</a>
+        </div>
+
+        <!-- Pending Approvals -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Pending Approvals</span>
+            <div class="text-2xl font-heading font-extrabold text-amber-600 mt-2">{{ stats.pending_approvals }}</div>
+            <span class="text-xs text-slate-400">Awaiting verification</span>
+        </div>
+
+        <!-- Active RFQs -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Active RFQs</span>
+            <div class="text-2xl font-heading font-extrabold text-blue-600 mt-2">{{ stats.active_rfqs }}</div>
+            <span class="text-xs text-slate-400">{{ stats.awarded_rfqs }} awarded tenders</span>
+        </div>
+
+        <!-- Quotations -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Submitted Quotations</span>
+            <div class="text-2xl font-heading font-extrabold text-slate-900 mt-2">{{ stats.total_quotes }}</div>
+            <a href="{% url 'admin_portal:quotations' %}" class="text-xs text-indigo-600 hover:underline mt-1 inline-block">View Quotations &rarr;</a>
+        </div>
+
+        <!-- Purchase Orders -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Purchase Orders</span>
+            <div class="text-2xl font-heading font-extrabold text-slate-900 mt-2">{{ stats.total_orders }}</div>
+            <a href="{% url 'admin_portal:orders' %}" class="text-xs text-indigo-600 hover:underline mt-1 inline-block">View Orders &rarr;</a>
+        </div>
+
+        <!-- Total Procurement Spend -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Total PO Value</span>
+            <div class="text-xl font-heading font-extrabold text-slate-900 mt-2">AED {{ stats.procurement_value|floatformat:0 }}</div>
+            <span class="text-xs text-emerald-600 font-medium">Under contract</span>
+        </div>
+
+        <!-- Mock Payments Settled -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Settled Escrow Payments</span>
+            <div class="text-xl font-heading font-extrabold text-emerald-600 mt-2">AED {{ stats.mock_payments|floatformat:0 }}</div>
+            <a href="{% url 'admin_portal:payments' %}" class="text-xs text-indigo-600 hover:underline mt-1 inline-block">Payment Ledger &rarr;</a>
+        </div>
+    </div>
+
+    <!-- PENDING APPROVALS QUEUE (IF ANY) -->
+    {% if stats.pending_approvals > 0 %}
+    <div class="bg-amber-50 rounded-2xl border border-amber-200 p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>
+                <h3 class="font-heading font-bold text-base text-amber-900">Pending Corporate Approvals Queue ({{ stats.pending_approvals }})</h3>
+            </div>
+            <span class="text-xs font-semibold text-amber-800">Requires Administrative Review</span>
+        </div>
+
+        <div class="divide-y divide-amber-200/60 bg-white rounded-xl border border-amber-200 overflow-hidden">
+            {% for u in recent_users_pending %}
+            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div>
+                    <span class="font-bold text-slate-900 text-sm">{{ u.company_name|default:u.username }}</span>
+                    <span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase
+                        {% if u.role == 'CUSTOMER' %}bg-emerald-100 text-emerald-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        {{ u.get_role_display }}
+                    </span>
+                    <p class="text-slate-500 mt-0.5">{{ u.email }} | {{ u.phone }} | Registered {{ u.created_at|timesince }} ago</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <a href="{% url 'admin_portal:update_user_status' u.id 'approve' %}" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition">
+                        Approve & Activate
+                    </a>
+                    <a href="{% url 'admin_portal:update_user_status' u.id 'reject' %}" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold transition">
+                        Reject
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- TWO COLUMN: RFQS & AUDIT STREAM -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        <!-- ALL RFQS OVERVIEW (7 Cols) -->
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="font-heading font-bold text-base text-slate-900">Procurement Requirements Monitor</h3>
+                <a href="{% url 'admin_portal:rfqs' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">All RFQs</a>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+                {% for rfq in recent_rfqs %}
+                <div class="p-4 hover:bg-slate-50 transition flex items-center justify-between text-xs">
+                    <div class="space-y-0.5">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-mono font-bold text-indigo-600">{{ rfq.rfq_number }}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase badge-status-{{ rfq.status }}">
+                                {{ rfq.get_status_display }}
+                            </span>
+                        </div>
+                        <p class="font-bold text-slate-900">{{ rfq.title }}</p>
+                        <p class="text-slate-500">{{ rfq.customer.company_name }} | {{ rfq.quotations.count }} bids received</p>
+                    </div>
+                    <a href="{% url 'customer_portal:rfq_detail' rfq.id %}" class="p-1.5 text-slate-400 hover:text-slate-600 rounded">
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="p-6 text-center text-xs text-slate-400">No RFQs logged yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- RECENT AUDIT STREAM (5 Cols) -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="font-heading font-bold text-base text-slate-900">Live Audit Stream</h3>
+                <a href="{% url 'admin_portal:audit_logs' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">All Logs</a>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+                {% for log in recent_audit_logs %}
+                <div class="p-3.5 text-xs hover:bg-slate-50 transition">
+                    <div class="flex items-center justify-between text-[11px] text-slate-400">
+                        <span class="font-mono font-bold text-slate-700">{{ log.action }}</span>
+                        <span>{{ log.timestamp|timesince }} ago</span>
+                    </div>
+                    <p class="text-slate-800 font-medium mt-1 leading-snug">{{ log.description }}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">By: {{ log.user.email|default:"System" }}</p>
+                </div>
+                {% empty %}
+                <div class="p-6 text-center text-xs text-slate-400">No audit records yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

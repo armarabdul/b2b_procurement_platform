@@ -1,0 +1,372 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Quotation Comparison & Evaluation Matrix{% endblock %}
+{% block breadcrumbs %}Procurement &rsaquo; <a href="{% url 'customer_portal:rfq_list' %}" class="hover:underline">RFQs</a> &rsaquo; <a href="{% url 'customer_portal:rfq_detail' rfq.id %}" class="hover:underline">{{ rfq.rfq_number }}</a> &rsaquo; Bid Comparison{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6" x-data="{
+    awardModalOpen: false,
+    selectedQuote: {
+        id: '',
+        number: '',
+        supplier: '',
+        grandTotal: '',
+        deliveryDays: '',
+        paymentTerms: ''
+    },
+    openAwardModal(id, number, supplier, grandTotal, deliveryDays, paymentTerms) {
+        this.selectedQuote = { id, number, supplier, grandTotal, deliveryDays, paymentTerms };
+        this.awardModalOpen = true;
+    }
+}">
+
+    <!-- TOP HEADER -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{{ rfq.rfq_number }}</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider badge-status-{{ rfq.status }}">
+                        {{ rfq.get_status_display }}
+                    </span>
+                    <span class="text-xs text-slate-500 font-medium">| {{ rfq.category.name }}</span>
+                </div>
+                <h1 class="text-2xl font-heading font-extrabold text-slate-900">{{ rfq.title }}</h1>
+                <p class="text-xs text-slate-500 mt-1">Delivery: {{ rfq.delivery_location }} ({{ rfq.get_emirate_display }}) | Target Date: {{ rfq.delivery_deadline|date:"M d, Y" }}</p>
+            </div>
+
+            <!-- SORTING CONTROLS -->
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-semibold text-slate-500 mr-1">Sort Bids By:</span>
+                <a href="?sort=overall_score" class="px-3 py-1.5 rounded-lg text-xs font-bold transition {% if current_sort == 'overall_score' %}bg-indigo-600 text-white shadow{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    Best Composite Score
+                </a>
+                <a href="?sort=price_asc" class="px-3 py-1.5 rounded-lg text-xs font-bold transition {% if current_sort == 'price_asc' %}bg-emerald-600 text-white shadow{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    Lowest Price
+                </a>
+                <a href="?sort=delivery_asc" class="px-3 py-1.5 rounded-lg text-xs font-bold transition {% if current_sort == 'delivery_asc' %}bg-blue-600 text-white shadow{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    Fastest Delivery
+                </a>
+                <a href="?sort=rating_desc" class="px-3 py-1.5 rounded-lg text-xs font-bold transition {% if current_sort == 'rating_desc' %}bg-amber-600 text-white shadow{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    Supplier Rating
+                </a>
+            </div>
+        </div>
+
+        <!-- EVALUATION METHODOLOGY DISCLAIMER / EXPLANATION -->
+        <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600">
+            <div class="flex items-start space-x-2.5">
+                <i data-lucide="info" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+                <div>
+                    <strong class="font-semibold text-slate-900">Configurable Multi-Factor Evaluation Engine:</strong>
+                    Score weights: Price (40%) + Delivery Speed (25%) + Vendor Reliability (20%) + Commercial Terms (15%).
+                    <span class="text-slate-400 block mt-0.5">Demo evaluation rules can be customized to enterprise procurement policy.</span>
+                </div>
+            </div>
+            {% if recommended_quote %}
+            <div class="shrink-0">
+                <span class="inline-flex items-center px-3 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 mr-1.5 text-emerald-600"></i>
+                    AI Recommendation: {{ recommended_quote.supplier.company_name }}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- COMPARISON MATRIX: DESKTOP TABLE & MOBILE CARDS -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="font-heading font-bold text-base text-slate-900">Bids Evaluation Matrix ({{ quotes|length }} Proposals)</h2>
+            <span class="text-xs text-slate-500">All prices include UAE 5% VAT</span>
+        </div>
+
+        <!-- DESKTOP COMPARISON TABLE -->
+        <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">Supplier & Quote No.</th>
+                        <th class="py-3 px-4">Grand Total (AED)</th>
+                        <th class="py-3 px-4">Lead Time</th>
+                        <th class="py-3 px-4">Commercial Terms</th>
+                        <th class="py-3 px-4">Supplier Rating</th>
+                        <th class="py-3 px-4">Scoring Breakdown</th>
+                        <th class="py-3 px-4 text-center">Composite Score</th>
+                        <th class="py-3 px-4 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for quote in quotes %}
+                    <tr class="hover:bg-slate-50/80 transition {% if quote.evaluation and quote.evaluation.is_recommended %}bg-emerald-50/30{% endif %}">
+                        <!-- Supplier Info -->
+                        <td class="py-4 px-4">
+                            <div class="flex items-start space-x-2">
+                                <div>
+                                    <span class="font-bold text-slate-900 text-sm block">{{ quote.supplier.company_name }}</span>
+                                    <span class="font-mono text-[11px] text-indigo-600">{{ quote.quotation_number }}</span>
+                                    {% if quote.evaluation and quote.evaluation.is_recommended %}
+                                    <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-600 text-white shadow-xs">
+                                        <i data-lucide="award" class="w-3 h-3 mr-1"></i> Recommended Bid
+                                    </span>
+                                    {% endif %}
+                                    {% if quote.status == 'ACCEPTED' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
+                                        Awarded Winner
+                                    </span>
+                                    {% elif quote.status == 'REJECTED' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-medium uppercase bg-red-50 text-red-700">
+                                        Rejected
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Grand Total -->
+                        <td class="py-4 px-4">
+                            <div class="font-bold text-slate-900 text-sm font-mono">AED {{ quote.grand_total|floatformat:2 }}</div>
+                            <div class="text-[10px] text-slate-400">
+                                Subtotal: AED {{ quote.subtotal|floatformat:0 }} | VAT: {{ quote.tax_amount|floatformat:0 }}
+                            </div>
+                        </td>
+
+                        <!-- Delivery -->
+                        <td class="py-4 px-4">
+                            <div class="font-bold text-slate-800">{{ quote.delivery_days }} Days</div>
+                            <div class="text-[10px] text-slate-400">Valid until: {{ quote.validity_date|date:"M d" }}</div>
+                        </td>
+
+                        <!-- Terms -->
+                        <td class="py-4 px-4">
+                            <span class="px-2 py-1 rounded bg-slate-100 text-slate-700 text-[11px] font-semibold">
+                                {{ quote.payment_terms }}
+                            </span>
+                        </td>
+
+                        <!-- Rating -->
+                        <td class="py-4 px-4">
+                            <div class="flex items-center text-amber-600 font-bold text-xs">
+                                <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400 mr-1"></i>
+                                {{ quote.supplier.supplier_profile.supplier_rating }}/5.00
+                            </div>
+                            <span class="text-[10px] text-slate-400">{{ quote.supplier.supplier_profile.years_in_business }} yrs in UAE</span>
+                        </td>
+
+                        <!-- Scoring Breakdown Bars -->
+                        <td class="py-4 px-4 min-w-[160px]">
+                            {% if quote.evaluation %}
+                            <div class="space-y-1.5 text-[10px]">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Price (40%)</span>
+                                    <span class="font-bold text-slate-700">{{ quote.evaluation.price_score|floatformat:0 }}%</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                    <div class="h-full bg-emerald-500 rounded-full" style="width: {{ quote.evaluation.price_score }}%"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-500">Delivery (25%)</span>
+                                    <span class="font-bold text-slate-700">{{ quote.evaluation.delivery_score|floatformat:0 }}%</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                    <div class="h-full bg-blue-500 rounded-full" style="width: {{ quote.evaluation.delivery_score }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Overall Composite Score -->
+                        <td class="py-4 px-4 text-center">
+                            {% if quote.evaluation %}
+                            <div class="inline-flex flex-col items-center justify-center p-2 rounded-xl {% if quote.evaluation.is_recommended %}bg-emerald-500 text-white font-black{% else %}bg-slate-100 text-slate-800 font-bold{% endif %} min-w-[65px]">
+                                <span class="text-base leading-none">{{ quote.evaluation.overall_score|floatformat:1 }}</span>
+                                <span class="text-[9px] uppercase tracking-wider opacity-80 mt-0.5">pts</span>
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Award Action Button -->
+                        <td class="py-4 px-4 text-right">
+                            {% if rfq.status == 'AWARDED' %}
+                                {% if quote.status == 'ACCEPTED' %}
+                                <span class="text-xs font-bold text-emerald-600 flex items-center justify-end">
+                                    <i data-lucide="check" class="w-4 h-4 mr-1"></i> Awarded
+                                </span>
+                                {% else %}
+                                <span class="text-xs text-slate-400">Not selected</span>
+                                {% endif %}
+                            {% else %}
+                                <button type="button"
+                                        @click="openAwardModal('{{ quote.id }}', '{{ quote.quotation_number }}', '{{ quote.supplier.company_name|escapejs }}', '{{ quote.grand_total|floatformat:2 }}', '{{ quote.delivery_days }}', '{{ quote.payment_terms|escapejs }}')"
+                                        class="inline-flex items-center px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition transform hover:-translate-y-0.5">
+                                    Select & Award
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- MOBILE RESPONSIVE CARDS (< 768px) -->
+        <div class="md:hidden divide-y divide-slate-100">
+            {% for quote in quotes %}
+            <div class="p-5 space-y-3 {% if quote.evaluation and quote.evaluation.is_recommended %}bg-emerald-50/40{% endif %}">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm">{{ quote.supplier.company_name }}</h3>
+                        <span class="font-mono text-xs text-indigo-600">{{ quote.quotation_number }}</span>
+                    </div>
+                    {% if quote.evaluation %}
+                    <div class="text-right">
+                        <span class="inline-block px-2.5 py-1 rounded-lg {% if quote.evaluation.is_recommended %}bg-emerald-600 text-white{% else %}bg-slate-100 text-slate-800{% endif %} font-bold text-xs">
+                            {{ quote.evaluation.overall_score|floatformat:1 }} pts
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase">Grand Total (Inc VAT)</span>
+                        <span class="font-bold text-slate-900 text-sm font-mono">AED {{ quote.grand_total|floatformat:2 }}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase">Delivery Days</span>
+                        <span class="font-semibold text-slate-800">{{ quote.delivery_days }} Days</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase">Payment Terms</span>
+                        <span class="font-semibold text-slate-800">{{ quote.payment_terms }}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase">Supplier Rating</span>
+                        <span class="font-semibold text-amber-600">{{ quote.supplier.supplier_profile.supplier_rating }}/5.00</span>
+                    </div>
+                </div>
+
+                {% if rfq.status != 'AWARDED' %}
+                <div class="pt-2">
+                    <button type="button"
+                            @click="openAwardModal('{{ quote.id }}', '{{ quote.quotation_number }}', '{{ quote.supplier.company_name|escapejs }}', '{{ quote.grand_total|floatformat:2 }}', '{{ quote.delivery_days }}', '{{ quote.payment_terms|escapejs }}')"
+                            class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow">
+                        Award to {{ quote.supplier.company_name }}
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ITEM-BY-ITEM DETAILED PRICE COMPARISON MATRIX -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100">
+            <h3 class="font-heading font-bold text-base text-slate-900">Line-Item Price Comparison Breakdown</h3>
+            <p class="text-xs text-slate-500">Side-by-side unit pricing across quoted items</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">Item Name</th>
+                        <th class="py-3 px-4">Qty</th>
+                        {% for quote in quotes %}
+                        <th class="py-3 px-4 text-right">
+                            <span class="block text-slate-900 font-bold truncate max-w-[140px]">{{ quote.supplier.company_name }}</span>
+                            <span class="font-mono text-[10px] text-slate-400">{{ quote.quotation_number }}</span>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for item in rfq.items.all %}
+                    <tr class="hover:bg-slate-50/60">
+                        <td class="py-3 px-4 font-bold text-slate-900">{{ item.item_name }}</td>
+                        <td class="py-3 px-4 text-slate-600">{{ item.quantity|floatformat:0 }} {{ item.unit }}</td>
+                        {% for quote in quotes %}
+                        <td class="py-3 px-4 text-right font-mono">
+                            {% for qi in quote.items.all %}
+                                {% if qi.rfq_item_id == item.id %}
+                                    <div class="font-bold text-slate-900">AED {{ qi.unit_price|floatformat:2 }}</div>
+                                    <div class="text-[10px] text-slate-400">Total: AED {{ qi.line_total|floatformat:2 }}</div>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- AWARD CONFIRMATION MODAL -->
+    <div x-show="awardModalOpen"
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+         style="display: none;"
+         x-transition>
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative"
+             @click.away="awardModalOpen = false">
+
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mb-4">
+                <i data-lucide="award" class="w-6 h-6"></i>
+            </div>
+
+            <h2 class="text-xl font-heading font-extrabold text-slate-900">Confirm Quotation Award</h2>
+            <p class="text-xs text-slate-500 mt-1">
+                You are issuing an official contract award for <strong class="text-slate-800">{{ rfq.rfq_number }}</strong>.
+            </p>
+
+            <!-- AWARD SUMMARY BOX -->
+            <div class="mt-5 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-500">Winning Supplier:</span>
+                    <strong class="text-slate-900" x-text="selectedQuote.supplier"></strong>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-500">Quotation Ref:</span>
+                    <span class="font-mono font-bold text-indigo-600" x-text="selectedQuote.number"></span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-500">Contract Total (Inc. 5% VAT):</span>
+                    <span class="font-bold text-emerald-700 font-mono text-sm" x-text="'AED ' + selectedQuote.grandTotal"></span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-200">
+                    <span class="text-slate-500">Committed Lead Time:</span>
+                    <span class="font-semibold text-slate-800" x-text="selectedQuote.deliveryDays + ' Calendar Days'"></span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-slate-500">Commercial Terms:</span>
+                    <span class="font-semibold text-slate-800" x-text="selectedQuote.paymentTerms"></span>
+                </div>
+            </div>
+
+            <div class="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-start space-x-2">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                <span>Confirming this award will automatically transition the winning quote to <strong>ACCEPTED</strong>, reject all other competing bids, generate official <strong>Purchase Order</strong>, and send legal notifications.</span>
+            </div>
+
+            <form method="POST" :action="'/portal/customer/quotations/' + selectedQuote.id + '/award/'" class="mt-6 space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Commercial Award Justification / Audit Notes</label>
+                    <input type="text" name="justification" class="form-input-field text-xs"
+                           placeholder="e.g. Best technical specifications with competitive pricing and compliant lead time.">
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" @click="awardModalOpen = false" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5">
+                        Confirm Award & Issue PO &rarr;
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

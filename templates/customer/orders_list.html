@@ -1,0 +1,62 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Purchase Orders & Contracts{% endblock %}
+{% block breadcrumbs %}Procurement &rsaquo; Purchase Orders{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Purchase Orders (POs)</h2>
+            <p class="text-xs text-slate-500">Official contracts generated from accepted quotations</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100 overflow-hidden">
+        {% for po in orders %}
+        <div class="p-5 hover:bg-slate-50 transition flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="space-y-1">
+                <div class="flex items-center space-x-2">
+                    <span class="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{{ po.po_number }}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
+                        {% if po.status == 'DELIVERED' or po.status == 'COMPLETED' %}bg-emerald-50 text-emerald-700
+                        {% elif po.status == 'PROCESSING' or po.status == 'SHIPPED' %}bg-blue-50 text-blue-700
+                        {% else %}bg-slate-100 text-slate-700{% endif %}">
+                        {{ po.get_status_display }}
+                    </span>
+                    <span class="text-xs text-slate-400">Ref: {{ po.rfq.rfq_number }}</span>
+                </div>
+                <h3 class="text-base font-bold text-slate-900 hover:text-emerald-600">
+                    <a href="{% url 'customer_portal:po_detail' po.id %}">{{ po.rfq.title }}</a>
+                </h3>
+                <div class="flex flex-wrap items-center gap-x-4 text-xs text-slate-500">
+                    <span><i data-lucide="building" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Vendor: <strong class="text-slate-800">{{ po.supplier.company_name }}</strong></span>
+                    <span><i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>Issued: {{ po.created_at|date:"M d, Y" }}</span>
+                    <span><i data-lucide="credit-card" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>{{ po.payment_terms }}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="text-right">
+                    <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Contract Value</span>
+                    <span class="text-base font-extrabold text-slate-900 font-mono">AED {{ po.total_amount|floatformat:2 }}</span>
+                    {% if po.payment %}
+                    <span class="text-[10px] font-semibold block {% if po.payment.status == 'PAID' %}text-emerald-600{% elif po.payment.status == 'PARTIALLY_PAID' %}text-amber-600{% else %}text-slate-400{% endif %}">
+                        {{ po.payment.get_status_display }} (AED {{ po.payment.amount_paid|floatformat:0 }})
+                    </span>
+                    {% endif %}
+                </div>
+                <a href="{% url 'customer_portal:po_detail' po.id %}" class="inline-flex items-center px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow transition">
+                    View PO & Payments &rarr;
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-12 text-center text-slate-400 text-xs">
+            <i data-lucide="file-check-2" class="w-12 h-12 mx-auto mb-3 text-slate-300"></i>
+            No purchase orders created yet. Once you award a quotation, the Purchase Order will be created here.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

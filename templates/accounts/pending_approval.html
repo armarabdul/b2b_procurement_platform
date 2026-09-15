@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Account Verification Pending | ProcureHub UAE{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 text-center">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-slate-100">
+        <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="clock" class="w-8 h-8 animate-pulse"></i>
+        </div>
+
+        <h2 class="text-2xl font-heading font-bold text-slate-900">Verification in Progress</h2>
+        <p class="text-xs text-slate-500 mt-2">
+            Status: <span class="font-bold text-amber-600 uppercase">{{ user.approval_status }}</span>
+        </p>
+
+        <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs text-slate-600 space-y-2">
+            <p><strong>Entity:</strong> {{ user.company_name }}</p>
+            <p><strong>Role:</strong> {{ user.get_role_display }}</p>
+            <p><strong>Registered Email:</strong> {{ user.email }}</p>
+            <p class="pt-2 border-t border-slate-200 text-slate-500">
+                To maintain high corporate standards, all UAE buyers and suppliers are reviewed by our compliance committee.
+            </p>
+        </div>
+
+        <div class="mt-6 space-y-2">
+            <!-- DEMO SHORTCUT: APPROVE NOW AS ADMIN -->
+            <a href="{% url 'accounts:quick_switch' 'admin' %}" class="block w-full py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-500 transition shadow">
+                [Demo Shortcut] Switch to Admin to Approve This Account &rarr;
+            </a>
+            <a href="{% url 'accounts:logout' %}" class="block w-full py-2.5 px-4 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs hover:bg-slate-200 transition">
+                Sign Out
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

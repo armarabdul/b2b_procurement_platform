@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ProcureHub UAE | Enterprise B2B Procurement & RFQ Platform{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Smarter Procurement. Better Quotations. Stronger Decisions. Next-generation B2B RFQ platform for Dubai and UAE enterprises.{% endblock %}">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (Play CDN for rapid enterprise prototyping with full utility support) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            800: '#0F172A',
+                            900: '#020617',
+                        },
+                        emerald: {
+                            500: '#10B981',
+                            600: '#059669',
+                            700: '#047857',
+                        },
+                        dubai: {
+                            gold: '#D97706',
+                            sand: '#F59E0B',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Alpine.js for Micro-interactions -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Custom Platform Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full flex flex-col font-sans text-slate-800 bg-slate-50 antialiased" x-data="{ mobileMenuOpen: false, quickSwitchOpen: false }">
+
+    <!-- DEMO PERSONA QUICK SWITCHER BAR -->
+    <div class="no-print bg-slate-900 text-slate-200 text-xs border-b border-slate-800 px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 z-50">
+        <div class="flex items-center space-x-2">
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40 text-[10px] tracking-wider uppercase">
+                DEMO / MVP MODE
+            </span>
+            <span class="hidden sm:inline text-slate-400">Currency: <strong class="text-white">AED (UAE Dirham)</strong> | VAT: <strong class="text-white">5%</strong> | Region: <strong class="text-white">Dubai / UAE</strong></span>
+        </div>
+
+        <div class="flex items-center space-x-1.5 overflow-x-auto py-0.5">
+            <span class="text-slate-400 text-[11px] mr-1 hidden md:inline">Quick Switch:</span>
+            <a href="{% url 'accounts:quick_switch' 'admin' %}" class="px-2 py-0.5 rounded text-[11px] font-medium transition {% if user.is_authenticated and user.role == 'ADMIN' %}bg-indigo-600 text-white font-bold{% else %}bg-slate-800 text-slate-300 hover:bg-slate-700{% endif %}">
+                Admin
+            </a>
+            <a href="{% url 'accounts:quick_switch' 'customer' %}" class="px-2 py-0.5 rounded text-[11px] font-medium transition {% if user.is_authenticated and user.role == 'CUSTOMER' and user.is_approved %}bg-emerald-600 text-white font-bold{% else %}bg-slate-800 text-slate-300 hover:bg-slate-700{% endif %}">
+                Buyer (Al-Futtaim)
+            </a>
+            <a href="{% url 'accounts:quick_switch' 'supplier1' %}" class="px-2 py-0.5 rounded text-[11px] font-medium transition {% if user.email == 'supplier1@procurehub.demo' %}bg-blue-600 text-white font-bold{% else %}bg-slate-800 text-slate-300 hover:bg-slate-700{% endif %}">
+                Supplier 1 (Emirates Office)
+            </a>
+            <a href="{% url 'accounts:quick_switch' 'supplier2' %}" class="px-2 py-0.5 rounded text-[11px] font-medium transition {% if user.email == 'supplier2@procurehub.demo' %}bg-blue-600 text-white font-bold{% else %}bg-slate-800 text-slate-300 hover:bg-slate-700{% endif %}">
+                Supplier 2 (Gulf Supplies)
+            </a>
+            <a href="{% url 'accounts:quick_switch' 'supplier3' %}" class="px-2 py-0.5 rounded text-[11px] font-medium transition {% if user.email == 'supplier3@procurehub.demo' %}bg-blue-600 text-white font-bold{% else %}bg-slate-800 text-slate-300 hover:bg-slate-700{% endif %}">
+                Supplier 3 (Dubai Tech)
+            </a>
+            <a href="{% url 'accounts:quick_switch' 'pending_customer' %}" class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-amber-300 hover:bg-slate-700 hidden lg:inline">
+                Pending Buyer
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div class="flex-1 flex flex-col min-h-0">
+        {% block layout %}
+        <!-- Default Full Width Layout -->
+        <main class="flex-1">
+            {% block content %}{% endblock %}
+        </main>
+        {% endblock %}
+    </div>
+
+    <!-- TOAST NOTIFICATIONS / MESSAGES -->
+    {% if messages %}
+    <div class="fixed bottom-5 right-5 z-50 max-w-sm w-full space-y-2 pointer-events-none" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 7000)">
+        {% for message in messages %}
+        <div class="pointer-events-auto p-4 rounded-xl shadow-xl border flex items-start space-x-3 transition transform animate-fade-in
+            {% if message.tags == 'error' or message.tags == 'danger' %}bg-red-50 text-red-900 border-red-200
+            {% elif message.tags == 'warning' %}bg-amber-50 text-amber-900 border-amber-200
+            {% elif message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200
+            {% else %}bg-blue-50 text-blue-900 border-blue-200{% endif %}">
+            <div class="shrink-0 mt-0.5">
+                {% if message.tags == 'error' or message.tags == 'danger' %}
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i>
+                {% elif message.tags == 'warning' %}
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>
+                {% elif message.tags == 'success' %}
+                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i>
+                {% else %}
+                <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                {% endif %}
+            </div>
+            <div class="flex-1 text-sm leading-snug font-medium">
+                {{ message }}
+            </div>
+            <button @click="show = false" class="text-slate-400 hover:text-slate-600 p-0.5">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+        document.addEventListener('htmx:afterSwap', () => {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

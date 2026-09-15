@@ -1,0 +1,82 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Suppliers & Vendors Management{% endblock %}
+{% block breadcrumbs %}Admin &rsaquo; Suppliers{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Commercial Suppliers & Vendors</h2>
+            <p class="text-xs text-slate-500">Review UAE trade licenses, supplier ratings, and approval state</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">Supplier Company</th>
+                        <th class="py-3 px-4">Commercial Rep</th>
+                        <th class="py-3 px-4">Trade License No.</th>
+                        <th class="py-3 px-4">Categories</th>
+                        <th class="py-3 px-4">Rating</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for u in suppliers %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-4">
+                            <span class="font-bold text-slate-900 block">{{ u.company_name|default:u.username }}</span>
+                            <span class="text-slate-400 text-[10px]">{{ u.email }} | {{ u.supplier_profile.get_emirate_display }}</span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="text-slate-800">{{ u.get_full_name }}</span>
+                            <span class="text-slate-400 block text-[10px]">{{ u.phone }}</span>
+                        </td>
+                        <td class="py-3.5 px-4 font-mono text-[11px]">{{ u.supplier_profile.trade_license_number }}</td>
+                        <td class="py-3.5 px-4 max-w-xs text-slate-600 truncate">{{ u.supplier_profile.business_categories }}</td>
+                        <td class="py-3.5 px-4 font-bold text-amber-600">
+                            <span class="flex items-center">
+                                <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400 mr-1"></i>
+                                {{ u.supplier_profile.supplier_rating }}/5.00
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                                {% if u.approval_status == 'APPROVED' %}bg-emerald-100 text-emerald-800
+                                {% elif u.approval_status == 'PENDING' %}bg-amber-100 text-amber-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ u.get_approval_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right space-x-1">
+                            {% if u.approval_status != 'APPROVED' %}
+                            <a href="{% url 'admin_portal:update_user_status' u.id 'approve' %}" class="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-xs">
+                                Approve
+                            </a>
+                            {% endif %}
+                            {% if u.approval_status != 'REJECTED' %}
+                            <a href="{% url 'admin_portal:update_user_status' u.id 'reject' %}" class="px-2.5 py-1 rounded-md bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-[11px]">
+                                Reject
+                            </a>
+                            {% endif %}
+                            {% if u.approval_status != 'SUSPENDED' and u.approval_status == 'APPROVED' %}
+                            <a href="{% url 'admin_portal:update_user_status' u.id 'suspend' %}" class="px-2.5 py-1 rounded-md bg-red-50 text-red-700 hover:bg-red-100 font-semibold text-[11px]">
+                                Suspend
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">No suppliers registered yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

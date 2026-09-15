@@ -1,0 +1,80 @@
+{% extends 'portal_base.html' %}
+
+{% block page_title %}Enterprise Buyers Management{% endblock %}
+{% block breadcrumbs %}Admin &rsaquo; Customers{% endblock %}
+
+{% block portal_content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-heading font-bold text-slate-900">Registered Corporate Buyers</h2>
+            <p class="text-xs text-slate-500">Approve, reject, or suspend UAE enterprise procurement accounts</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                        <th class="py-3 px-4">Company / Entity</th>
+                        <th class="py-3 px-4">Contact Person</th>
+                        <th class="py-3 px-4">Trade License / TRN</th>
+                        <th class="py-3 px-4">Emirate</th>
+                        <th class="py-3 px-4">Approval State</th>
+                        <th class="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for u in customers %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3.5 px-4">
+                            <span class="font-bold text-slate-900 block">{{ u.company_name|default:u.username }}</span>
+                            <span class="text-slate-400 text-[10px]">{{ u.email }}</span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="text-slate-800">{{ u.get_full_name }}</span>
+                            <span class="text-slate-400 block text-[10px]">{{ u.phone }}</span>
+                        </td>
+                        <td class="py-3.5 px-4 font-mono text-[11px]">
+                            <div>{{ u.customer_profile.trade_license_number|default:"--" }}</div>
+                            {% if u.customer_profile.tax_registration_number %}
+                            <div class="text-[10px] text-slate-400">TRN: {{ u.customer_profile.tax_registration_number }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-4">{{ u.customer_profile.get_emirate_display|default:"UAE" }}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                                {% if u.approval_status == 'APPROVED' %}bg-emerald-100 text-emerald-800
+                                {% elif u.approval_status == 'PENDING' %}bg-amber-100 text-amber-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ u.get_approval_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right space-x-1">
+                            {% if u.approval_status != 'APPROVED' %}
+                            <a href="{% url 'admin_portal:update_user_status' u.id 'approve' %}" class="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-xs">
+                                Approve
+                            </a>
+                            {% endif %}
+                            {% if u.approval_status != 'REJECTED' %}
+                            <a href="{% url 'admin_portal:update_user_status' u.id 'reject' %}" class="px-2.5 py-1 rounded-md bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-[11px]">
+                                Reject
+                            </a>
+                            {% endif %}
+                            {% if u.approval_status != 'SUSPENDED' and u.approval_status == 'APPROVED' %}
+                            <a href="{% url 'admin_portal:update_user_status' u.id 'suspend' %}" class="px-2.5 py-1 rounded-md bg-red-50 text-red-700 hover:bg-red-100 font-semibold text-[11px]">
+                                Suspend
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="p-8 text-center text-slate-400 text-xs">No customer accounts registered.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
