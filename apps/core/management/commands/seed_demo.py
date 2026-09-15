@@ -172,7 +172,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Demo users and verified UAE profiles created."))
 
         # 3. Create Realistic Published RFQ: "Office Furniture Requirement - Dubai"
-        rfq, created = RFQ.objects.get_or_create(
+        rfq, _ = RFQ.objects.get_or_create(
             customer=customer_user,
             title="Office Furniture Requirement - Dubai Marina HQ",
             defaults={
@@ -192,35 +192,38 @@ class Command(BaseCommand):
             }
         )
 
-        # Clear items if existing to avoid duplicates on re-seed
-        rfq.items.all().delete()
-
-        item1 = RFQItem.objects.create(
+        item1, _ = RFQItem.objects.get_or_create(
             rfq=rfq,
             item_name="Executive Ergonomic High-Back Chair",
-            quantity=Decimal('50.00'),
-            unit="Pcs",
-            specifications="Breathable high-tensile mesh, synchronized tilt-mechanism, adjustable 3D armrests, ESMA certified",
-            preferred_brand="Herman Miller / Steelcase or equivalent"
+            defaults={
+                'quantity': Decimal('50.00'),
+                'unit': "Pcs",
+                'specifications': "Breathable high-tensile mesh, synchronized tilt-mechanism, adjustable 3D armrests, ESMA certified",
+                'preferred_brand': "Herman Miller / Steelcase or equivalent"
+            }
         )
-        item2 = RFQItem.objects.create(
+        item2, _ = RFQItem.objects.get_or_create(
             rfq=rfq,
             item_name="Energy-Efficient Ceiling Ventilation Fan",
-            quantity=Decimal('30.00'),
-            unit="Pcs",
-            specifications="1200mm sweep, BLDC low-noise motor, remote control, 5-star ESMA rating",
-            preferred_brand="Panasonic / Havells or equivalent"
+            defaults={
+                'quantity': Decimal('30.00'),
+                'unit': "Pcs",
+                'specifications': "1200mm sweep, BLDC low-noise motor, remote control, 5-star ESMA rating",
+                'preferred_brand': "Panasonic / Havells or equivalent"
+            }
         )
-        item3 = RFQItem.objects.create(
+        item3, _ = RFQItem.objects.get_or_create(
             rfq=rfq,
             item_name="Heavy-Duty Modular Workstation Desk",
-            quantity=Decimal('25.00'),
-            unit="Sets",
-            specifications="1500mm x 750mm x 750mm, powder-coated steel leg frame, cable management conduit, privacy acoustic screen",
-            preferred_brand="Commercial grade melamine"
+            defaults={
+                'quantity': Decimal('25.00'),
+                'unit': "Sets",
+                'specifications': "1500mm x 750mm x 750mm, powder-coated steel leg frame, cable management conduit, privacy acoustic screen",
+                'preferred_brand': "Commercial grade melamine"
+            }
         )
 
-        self.stdout.write(self.style.SUCCESS(f"Created procurement RFQ {rfq.rfq_number} with 3 line items."))
+        self.stdout.write(self.style.SUCCESS(f"Loaded procurement RFQ {rfq.rfq_number} with 3 line items."))
 
         # 4. Create Quotations from All 3 Suppliers
         # Supplier 1: Emirates Office Solutions (Best Balanced, Recommended)
@@ -236,10 +239,21 @@ class Command(BaseCommand):
                 'status': QuotationStatus.SUBMITTED
             }
         )
-        q1.items.all().delete()
-        QuotationItem.objects.create(quotation=q1, rfq_item=item1, quantity=Decimal('50.00'), unit_price=Decimal('420.00'), discount=Decimal('0.00'), tax_rate=Decimal('5.00'), remarks="Model: Ergofit Pro Mesh (Grade A)")
-        QuotationItem.objects.create(quotation=q1, rfq_item=item2, quantity=Decimal('30.00'), unit_price=Decimal('180.00'), discount=Decimal('0.00'), tax_rate=Decimal('5.00'), remarks="Model: Panasonic WhisperBLDC 1200mm")
-        QuotationItem.objects.create(quotation=q1, rfq_item=item3, quantity=Decimal('25.00'), unit_price=Decimal('790.00'), discount=Decimal('0.00'), tax_rate=Decimal('5.00'), remarks="Model: ModularSteel 150 Desk Set")
+        QuotationItem.objects.get_or_create(
+            quotation=q1,
+            rfq_item=item1,
+            defaults={'quantity': Decimal('50.00'), 'unit_price': Decimal('420.00'), 'discount': Decimal('0.00'), 'tax_rate': Decimal('5.00'), 'remarks': "Model: Ergofit Pro Mesh (Grade A)"}
+        )
+        QuotationItem.objects.get_or_create(
+            quotation=q1,
+            rfq_item=item2,
+            defaults={'quantity': Decimal('30.00'), 'unit_price': Decimal('180.00'), 'discount': Decimal('0.00'), 'tax_rate': Decimal('5.00'), 'remarks': "Model: Panasonic WhisperBLDC 1200mm"}
+        )
+        QuotationItem.objects.get_or_create(
+            quotation=q1,
+            rfq_item=item3,
+            defaults={'quantity': Decimal('25.00'), 'unit_price': Decimal('790.00'), 'discount': Decimal('0.00'), 'tax_rate': Decimal('5.00'), 'remarks': "Model: ModularSteel 150 Desk Set"}
+        )
         q1.calculate_totals()
 
         # Supplier 2: Gulf Commercial Supplies (Lowest Raw Price, Longer Lead Time)
@@ -255,10 +269,21 @@ class Command(BaseCommand):
                 'status': QuotationStatus.SUBMITTED
             }
         )
-        q2.items.all().delete()
-        QuotationItem.objects.create(quotation=q2, rfq_item=item1, quantity=Decimal('50.00'), unit_price=Decimal('390.00'), discount=Decimal('200.00'), tax_rate=Decimal('5.00'), remarks="Direct factory import equivalent")
-        QuotationItem.objects.create(quotation=q2, rfq_item=item2, quantity=Decimal('30.00'), unit_price=Decimal('170.00'), discount=Decimal('100.00'), tax_rate=Decimal('5.00'), remarks="Standard ESMA certified BLDC")
-        QuotationItem.objects.create(quotation=q2, rfq_item=item3, quantity=Decimal('25.00'), unit_price=Decimal('760.00'), discount=Decimal('200.00'), tax_rate=Decimal('5.00'), remarks="JAFZA stock modular workstations")
+        QuotationItem.objects.get_or_create(
+            quotation=q2,
+            rfq_item=item1,
+            defaults={'quantity': Decimal('50.00'), 'unit_price': Decimal('390.00'), 'discount': Decimal('200.00'), 'tax_rate': Decimal('5.00'), 'remarks': "Direct factory import equivalent"}
+        )
+        QuotationItem.objects.get_or_create(
+            quotation=q2,
+            rfq_item=item2,
+            defaults={'quantity': Decimal('30.00'), 'unit_price': Decimal('170.00'), 'discount': Decimal('100.00'), 'tax_rate': Decimal('5.00'), 'remarks': "Standard ESMA certified BLDC"}
+        )
+        QuotationItem.objects.get_or_create(
+            quotation=q2,
+            rfq_item=item3,
+            defaults={'quantity': Decimal('25.00'), 'unit_price': Decimal('760.00'), 'discount': Decimal('200.00'), 'tax_rate': Decimal('5.00'), 'remarks': "JAFZA stock modular workstations"}
+        )
         q2.calculate_totals()
 
         # Supplier 3: Dubai Furnishings Ltd (Fastest Delivery, Slightly Higher Price)
@@ -274,33 +299,45 @@ class Command(BaseCommand):
                 'status': QuotationStatus.SUBMITTED
             }
         )
-        q3.items.all().delete()
-        QuotationItem.objects.create(quotation=q3, rfq_item=item1, quantity=Decimal('50.00'), unit_price=Decimal('450.00'), discount=Decimal('0.00'), tax_rate=Decimal('5.00'), remarks="Express ready stock Herman Miller licensed")
-        QuotationItem.objects.create(quotation=q3, rfq_item=item2, quantity=Decimal('30.00'), unit_price=Decimal('200.00'), discount=Decimal('0.00'), tax_rate=Decimal('5.00'), remarks="ESMA 5-star ventilation")
-        QuotationItem.objects.create(quotation=q3, rfq_item=item3, quantity=Decimal('25.00'), unit_price=Decimal('820.00'), discount=Decimal('0.00'), tax_rate=Decimal('5.00'), remarks="Heavy duty steel frames")
+        QuotationItem.objects.get_or_create(
+            quotation=q3,
+            rfq_item=item1,
+            defaults={'quantity': Decimal('50.00'), 'unit_price': Decimal('450.00'), 'discount': Decimal('0.00'), 'tax_rate': Decimal('5.00'), 'remarks': "Express ready stock Herman Miller licensed"}
+        )
+        QuotationItem.objects.get_or_create(
+            quotation=q3,
+            rfq_item=item2,
+            defaults={'quantity': Decimal('30.00'), 'unit_price': Decimal('200.00'), 'discount': Decimal('0.00'), 'tax_rate': Decimal('5.00'), 'remarks': "ESMA 5-star ventilation"}
+        )
+        QuotationItem.objects.get_or_create(
+            quotation=q3,
+            rfq_item=item3,
+            defaults={'quantity': Decimal('25.00'), 'unit_price': Decimal('820.00'), 'discount': Decimal('0.00'), 'tax_rate': Decimal('5.00'), 'remarks': "Heavy duty steel frames"}
+        )
         q3.calculate_totals()
 
         # 5. Run Evaluation Engine for this RFQ
         evaluate_rfq_quotations(rfq)
         self.stdout.write(self.style.SUCCESS("Evaluated 3 competitive quotations with weighted scores."))
 
-        # 6. Pre-seed notifications
+        # 6. Pre-seed notifications (idempotent lookup by recipient and link)
         Notification.objects.get_or_create(
             recipient=customer_user,
-            title="3 Quotations Received for RFQ-2026-0001",
+            link=f"/portal/customer/rfqs/{rfq.id}/compare/",
             defaults={
+                'title': f"3 Quotations Received for {rfq.rfq_number}",
                 'message': "Emirates Office Solutions, Gulf Commercial Supplies, and Dubai Furnishings have submitted bids.",
                 'notification_type': NotificationType.INFO,
-                'link': f"/portal/customer/rfqs/{rfq.id}/compare/"
             }
         )
 
-        # 7. Pre-seed activity logs
-        ActivityLog.log(
-            user=customer_user,
-            action="SEED_DATABASE",
-            description="Initialized realistic Dubai enterprise demo procurement scenario with 3 suppliers."
-        )
+        # 7. Pre-seed activity logs (idempotent: avoid duplicate log entries)
+        if not ActivityLog.objects.filter(action="SEED_DATABASE").exists():
+            ActivityLog.log(
+                user=customer_user,
+                action="SEED_DATABASE",
+                description="Initialized realistic Dubai enterprise demo procurement scenario with 3 suppliers."
+            )
 
         self.stdout.write(self.style.SUCCESS("""
 ================================================================
